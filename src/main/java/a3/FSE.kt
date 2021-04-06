@@ -1,9 +1,11 @@
 package a3
 
+import org.apache.commons.math3.distribution.ExponentialDistribution
+
 /**
  * Field service engineer
  */
-class FSE {
+class FSE(val arrivalDistributionMatrix: Array<Array<ExponentialDistribution>>, val policy: Policy) {
     // only 1 FSE
     // preventive maintenance
     //      has lower cost
