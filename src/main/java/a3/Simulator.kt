@@ -2,6 +2,7 @@ package a3
 
 import a3.events.DegradationEvent
 import a3.events.FSEArrivalEvent
+import a3.events.MaintenanceEvent
 import org.apache.commons.math3.distribution.ExponentialDistribution
 
 class Simulator {
@@ -45,9 +46,15 @@ class Simulator {
                         if (machineToRepair == event.machine) {
 //                    fes.add(CorrectiveMaintenanceEvent(time = , machine = machineToRepair, fse = fse))
                             // Corrective Maintenance
-                            // TODO: collect downtime penalty and repair cost
-                            machineToRepair.repair()
+                            // TODO: report repair cost
                             val repairTime = 1.0 // TODO: sample repair time
+                            fes.add(
+                                MaintenanceEvent(
+                                    time = currentTime + repairTime,
+                                    machine = machineToRepair,
+                                    fse = fse
+                                )
+                            )
                             fes.add(
                                 FSEArrivalEvent(
                                     time = currentTime + repairTime,
@@ -74,7 +81,7 @@ class Simulator {
                     }
                 } else if (fse.policy == Policy.GREEDY) {
                     // Machine with max degradation, then shortest travel time
-                    val machineToRepair = machines.maxWithOrNull(
+                    val machineToRepair = machines.maxWithOrNull( //TODO: pick uniformly at random, or prove it already does so
                         compareBy({ it.degradation },
                             { -fse.arrivalDistributionMatrix[event.machine.id][it.id].mean }) //TODO: travel time
                     )
@@ -87,9 +94,15 @@ class Simulator {
                     } else {
                         if (machineToRepair == event.machine) {
                             // Preventive maintenance
-                            // TODO: collect downtime penalty and repair cost
-                            machineToRepair.repair()
+                            // TODO: report repair penalty
                             val repairTime = 1.0 // TODO: sample repair time
+                            fes.add(
+                                MaintenanceEvent(
+                                    time = currentTime + repairTime,
+                                    machine = machineToRepair,
+                                    fse = fse
+                                )
+                            )
                             fes.add(
                                 FSEArrivalEvent(
                                     time = currentTime + repairTime,
@@ -106,8 +119,25 @@ class Simulator {
                 // degrade machine and schedule new degradation event
                 event.machine.degrade(currentTime)
                 if (!event.machine.hasFailed()) {
-                    fes.add(DegradationEvent(currentTime + event.machine.arrivalDistribution.sample(), event.machine))
+                    fes.add(
+                        DegradationEvent(
+                            time = currentTime + event.machine.arrivalDistribution.sample(),
+                            machine = event.machine
+                        )
+                    )
                 }
+            }
+
+            if (event is MaintenanceEvent) {
+                event.machine.repair()
+                // TODO: report downtime penalty
+                // When maintenance is finished, restart degradation process.
+                fes.add(
+                    DegradationEvent(
+                        time = currentTime + event.machine.arrivalDistribution.sample(),
+                        machine = event.machine
+                    )
+                )
             }
         }
         // TODO: collect downtime penalties

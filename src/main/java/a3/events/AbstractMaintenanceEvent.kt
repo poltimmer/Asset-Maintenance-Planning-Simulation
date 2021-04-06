@@ -8,4 +8,4 @@ import a3.Machine
  * @param machine machine where the maintenance is executed
  * @param fse FSE doing the maintenance
  */
-class MaintenanceEvent(time: Double, machine: Machine, val fse: FSE): Event(time, machine)
+abstract class AbstractMaintenanceEvent(time: Double, machine: Machine, val fse: FSE): Event(time, machine)
