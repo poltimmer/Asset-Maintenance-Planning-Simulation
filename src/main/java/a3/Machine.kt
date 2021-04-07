@@ -17,8 +17,8 @@ class Machine(
     val id: Int,
     val threshold: Double,
     val downTimeCost: Double,
-    val arrivalDistribution: ExponentialDistribution,
-    val degradationDistribution: BetaDistribution,
+    val arrivalDistribution: ExponentialDistribution, // todo: generic distribution
+    val degradationDistribution: BetaDistribution, // todo: generic distribution
     var degradation: Double = 0.0,
     var lastFailedAtTime: Double = 0.0
 ) {
