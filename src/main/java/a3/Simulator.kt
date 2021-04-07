@@ -22,7 +22,7 @@ class Simulator {
             fes.add(DegradationEvent(machine.arrivalDistribution.sample(), machine))
         }
 
-        var currentTime: Double = 0.0 // t
+        var currentTime = 0.0 // t
         while (currentTime < maxTime) {
             val event = fes.poll()
             currentTime = event.time
@@ -38,10 +38,7 @@ class Simulator {
                     if (failedMachines.isNotEmpty()) {
                         // Pick the single machine with maximum downtime penalty. Arbitrary choice in case of ties.
                         var machineToRepair = failedMachines.maxByOrNull { it.downTimePenaltyAtTime(currentTime) }
-
-                        if (machineToRepair == null) {
-                            throw Exception("machine to repair is null while list of failed machines is not empty")
-                        }
+                                ?: throw Exception("machine to repair is null while list of failed machines is not empty")
 
                         if (machineToRepair == event.machine) {
 //                    fes.add(CorrectiveMaintenanceEvent(time = , machine = machineToRepair, fse = fse))
