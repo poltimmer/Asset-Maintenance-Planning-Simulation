@@ -47,7 +47,7 @@ class Machine(
             if (currentTime - lastFailedAtTime < 0) {
                 throw Exception("negative downtime penalty")
             }
-            // Only whole timesteps
+            // Only whole time steps
             floor(currentTime - lastFailedAtTime) * downTimeCost
         } else {
             0.0
