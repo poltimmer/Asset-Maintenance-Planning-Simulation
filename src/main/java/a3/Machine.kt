@@ -1,8 +1,6 @@
 package a3
 
-import org.apache.commons.math3.distribution.BetaDistribution
-import org.apache.commons.math3.distribution.ExponentialDistribution
-import java.lang.Exception
+import org.apache.commons.math3.distribution.AbstractRealDistribution
 import kotlin.math.floor
 import kotlin.math.min
 
@@ -17,10 +15,14 @@ class Machine(
     val id: Int,
     val threshold: Double,
     val downTimeCost: Double,
-    val arrivalDistribution: ExponentialDistribution, // todo: generic distribution
-    val degradationDistribution: BetaDistribution, // todo: generic distribution
+    val preventiveMaintenanceCost: Double,
+    val correctiveMaintenanceCost: Double,
+    val arrivalDistribution: AbstractRealDistribution,
+    val degradationDistribution: AbstractRealDistribution,
+    val preventiveMaintenanceTimeDistribution: AbstractRealDistribution,
+    val correctiveMaintenanceTimeDistribution: AbstractRealDistribution,
     var degradation: Double = 0.0,
-    var lastFailedAtTime: Double = 0.0
+    var lastFailedAtTime: Double = 0.0,
 ) {
     // unique location
     // subject to degradation

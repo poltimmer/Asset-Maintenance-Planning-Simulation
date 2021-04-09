@@ -3,6 +3,7 @@ package a3
 import a3.events.DegradationEvent
 import a3.events.FSEArrivalEvent
 import a3.events.MaintenanceEvent
+import java.util.*
 
 class Simulator(private val fes: FES, private val fse: FSE, private val machines: List<Machine>) {
     private var currentTime = 0.0
@@ -48,8 +49,8 @@ class Simulator(private val fes: FES, private val fse: FSE, private val machines
 //                    fes.add(CorrectiveMaintenanceEvent(time = , machine = machineToRepair, fse = fse))
                             // Corrective Maintenance
 
-                            results[machineToRepair]!!.reportCost(1.0) // TODO: report actual repair cost
-                            val repairTime = 1.0 // TODO: sample repair time
+                            results[machineToRepair]!!.reportCost(machineToRepair.correctiveMaintenanceCost)
+                            val repairTime = machineToRepair.correctiveMaintenanceTimeDistribution.sample()
                             fes.add(
                                 MaintenanceEvent(
                                     time = currentTime + repairTime,
@@ -66,7 +67,7 @@ class Simulator(private val fes: FES, private val fse: FSE, private val machines
                             )
                         } else {
                             val travelTime =
-                                fse.arrivalDistributionMatrix[event.machine.id][machineToRepair.id].sample() //TODO: travel time from matrix?
+                                fse.arrivalDistributionMatrix[event.machine.id][machineToRepair.id].sample()
                             fes.add(
                                 FSEArrivalEvent(
                                     time = currentTime + travelTime,
@@ -79,27 +80,33 @@ class Simulator(private val fes: FES, private val fse: FSE, private val machines
                         // Stay idle until next state change
                         // Add event at same time as next event. Will be scheduled right after next event in queue,
                         // because the queue is FIFO on ties.
-                        fes.add(FSEArrivalEvent(time = fes.peek().time, machine = event.machine, fse = fse))
+                        if (fes.peek() == null) {
+                            println("yeah, it's null")
+                        }
+                        fes.add(FSEArrivalEvent(time = fes.peek().time, machine = event.machine, fse = fse)) //todo: what if time is null?
                     }
-                } else if (fse.policy == Policy.GREEDY) {
+                } else if (fse.policy == Policy.GREEDY) { //TODO: FES goes empty under greedy policy
                     // Machine with max degradation, then shortest travel time
                     val machineToRepair =
                         machines.maxWithOrNull( //TODO: pick uniformly at random, or prove it already does so
                             compareBy({ it.degradation },
-                                { -fse.arrivalDistributionMatrix[event.machine.id][it.id].mean }) //TODO: travel time
+                                { -fse.arrivalDistributionMatrix[event.machine.id][it.id].numericalMean })
                         )!!
 
                     if (machineToRepair.degradation == 0.0) {
                         // Stay idle until next state change
                         // Add event at same time as next event. Will be scheduled right after next event in queue,
                         // because the queue is FIFO on ties.
-                        fes.add(FSEArrivalEvent(time = fes.peek().time, machine = event.machine, fse = fse))
+                        if (fes.peek() == null) {
+                            println("yeah, it's null")
+                        }
+                        fes.add(FSEArrivalEvent(time = fes.peek().time, machine = event.machine, fse = fse)) //todo: this might be where it goes wrong?
                     } else {
                         if (machineToRepair == event.machine) {
                             // Preventive maintenance
-                            results[machineToRepair]!!.reportCost(1.0) // TODO: report repair penalty
+                            results[machineToRepair]!!.reportCost(machineToRepair.preventiveMaintenanceCost)
 
-                            val repairTime = 1.0 // TODO: sample repair time
+                            val repairTime = machineToRepair.preventiveMaintenanceTimeDistribution.sample()
                             fes.add(
                                 MaintenanceEvent(
                                     time = currentTime + repairTime,
@@ -120,9 +127,11 @@ class Simulator(private val fes: FES, private val fse: FSE, private val machines
             }
 
             if (event is DegradationEvent) {
-                // degrade machine and schedule new degradation event
+                // degrade machine and schedule new degradation event if it is still operational
                 event.machine.degrade(currentTime)
-                if (!event.machine.hasFailed()) {
+                if (event.machine.hasFailed()) {
+                    results[event.machine]!!.reportMachineFailed(currentTime)
+                } else {
                     fes.add(
                         DegradationEvent(
                             time = currentTime + event.machine.arrivalDistribution.sample(),
@@ -136,6 +145,7 @@ class Simulator(private val fes: FES, private val fse: FSE, private val machines
                 // Repair and report downtime penalty
                 event.machine.repair()
                 results[event.machine]!!.reportCost(event.machine.downTimePenaltyAtTime(currentTime))
+                results[event.machine]!!.reportMachineRepaired(currentTime)
                 // When maintenance is finished, restart degradation process.
                 fes.add(
                     DegradationEvent(

@@ -9,7 +9,9 @@ class SimResults(private val simDuration: Double, private val startTime: Double)
     val responseTime get() = responseTimeSum/responseTimeCount
 
     private var lastUpdateTime = startTime
-    private var operationalRatio = 0.0
+    private var operationalSum = 0.0
+    val operationalRatio get() = operationalSum/simDuration
+
 
 
     fun reportCost(cost: Double) {
@@ -17,12 +19,12 @@ class SimResults(private val simDuration: Double, private val startTime: Double)
     }
 
     fun reportMachineRepaired(currentTime: Double) {
-        // operationalRatio += 0 * (currentTime - lastUpdateTime)
+        // operationalSum += 0 * (currentTime - lastUpdateTime)
         lastUpdateTime = currentTime
     }
 
     fun reportMachineFailed(currentTime: Double) {
-        operationalRatio += 1 * (currentTime - lastUpdateTime)
+        operationalSum += 1 * (currentTime - lastUpdateTime)
         lastUpdateTime = currentTime
     }
 
