@@ -34,14 +34,15 @@ class Simulator(private val fes: FES, private val fse: FSE, private val machines
             currentTime = event.time
 
             if (event is FSEArrivalEvent) {
-                val machineToRepair: Machine? = when (fse.policy) {
+                val machineToRepair = when (fse.policy) {
                     // Pick the single machine with maximum downtime penalty. Random choice in case of ties.
                     Policy.REACTIVE -> machines.filter { it.hasFailed() }
                         .maxWithOrNull(compareBy({ it.downTimePenaltyAtTime(currentTime) }, { Random.nextDouble() }))
 
                     // Pick the single machine with maximal degradation, then by minimal expected travel time, then random in case of ties.
                     Policy.GREEDY -> machines.maxWithOrNull(
-                        compareBy({ it.degradation },
+                        compareBy(
+                            { it.degradation },
                             { -fse.travelTimeDistributionMatrix[event.machine.id][it.id].numericalMean },
                             { Random.nextDouble() })
                     )!!
@@ -58,17 +59,14 @@ class Simulator(private val fes: FES, private val fse: FSE, private val machines
                     } else {
                         // No need to travel. Repair machine.
 
-                        val repairTime = when (fse.policy) { // Report maintenance cost and sample repair time
-                            Policy.REACTIVE -> {
+                        val repairTime =
+                            if (machineToRepair.hasFailed()) { // Report maintenance cost and sample repair time
                                 results[machineToRepair]!!.reportCost(machineToRepair.correctiveMaintenanceCost)
                                 machineToRepair.correctiveMaintenanceTimeDistribution.sample()
-                            }
-                            Policy.GREEDY -> {
+                            } else {
                                 results[machineToRepair]!!.reportCost(machineToRepair.preventiveMaintenanceCost)
                                 machineToRepair.preventiveMaintenanceTimeDistribution.sample()
                             }
-                            else -> throw Exception("Policy not recognized")
-                        }
 
                         fes.add(MaintenanceEvent(currentTime + repairTime, machineToRepair, fse))
                         fes.add(FSEArrivalEvent(currentTime + repairTime, machineToRepair, fse))
@@ -77,6 +75,7 @@ class Simulator(private val fes: FES, private val fse: FSE, private val machines
                     // Stay idle until next state change
                     // Add event at same time as next event. Will be scheduled right after next event in queue,
                     // because the queue is FIFO on ties.
+                    println("idle") //todo: remove
                     if (fes.peek() == null) {
                         println("yeah, it's null")
                     }
