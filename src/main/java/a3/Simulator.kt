@@ -121,6 +121,16 @@ class Simulator(private val fes: FES, private val fse: FSE, private val machines
                                     fse = fse
                                 )
                             )
+                        } else {
+                            val travelTime =
+                                fse.arrivalDistributionMatrix[event.machine.id][machineToRepair.id].sample()
+                            fes.add(
+                                FSEArrivalEvent(
+                                    time = currentTime + travelTime,
+                                    machine = machineToRepair,
+                                    fse = fse
+                                )
+                            )
                         }
                     }
                 }

@@ -10,7 +10,7 @@ fun main() {
     println("hello world");
 //    var event = CorrectiveMaintenanceEvent(0.1, Machine(1, threshold = 1.0), fse = FSE())
 //    println(event.time)
-    val results = getSimulator(Policy.REACTIVE).simulate(100000.0)
+    val results = getSimulator(Policy.GREEDY).simulate(100000.0)
     for (result in results) {
         println()
         println("Average cost: ${result.value.costAvg}")
