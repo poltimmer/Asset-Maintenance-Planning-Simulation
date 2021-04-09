@@ -24,47 +24,6 @@ fun getSimulator(
     inputFilePath: String = "./input/input.txt",
     matrixFilePath: String = "./input/matrix.txt"
 ): Simulator {
-//    val inputFile = File(inputFilePath)
-//    val keys = listOf(
-//        "arrivalLambdas",
-//        "alphas",
-//        "betas",
-//        "preventiveMaintenanceTimes",
-//        "correctiveMaintenanceTimes",
-//        "preventiveMaintenanceCosts",
-//        "correctiveMaintenanceCosts",
-//        "downTimeCosts"
-//    )
-//    val data = HashMap<String, List<Double>>()
-//    for ((key, line) in keys.zip(inputFile.readLines())) {
-//        data[key] = line.split("\\s".toRegex()).map { it.toDouble() }
-//    }
-//    val thresholds = inputScanner.nextLine().split(regex).map { it.toDouble() } //TODO: find nice solution
-//    val arrivalLambdas = inputScanner.nextLine().split(regex).map { it.toDouble() }
-//    val alphas = inputScanner.nextLine().split(regex).map { it.toDouble() }
-//    val betas = inputScanner.nextLine().split(regex).map { it.toDouble() }
-//    val preventiveMaintenanceTimes = inputScanner.nextLine().split(regex).map { it.toDouble() }
-//    val correctiveMaintenanceTimes = inputScanner.nextLine().split(regex).map { it.toDouble() }
-//    val preventiveMaintenanceCosts = inputScanner.nextLine().split(regex).map { it.toDouble() }
-//    val correctiveMaintenanceCosts = inputScanner.nextLine().split(regex).map { it.toDouble() }
-//    val downTimeCosts = inputScanner.nextLine().split(regex).map { it.toDouble() }
-
-//    for (i in data["thresholds"]!!.indices) {
-//        machines.add(
-//            Machine(
-//                id = i,
-//                threshold = data["thresholds"]!![i],
-//                downTimeCost = data["downTimeCosts"]!![i],
-//                preventiveMaintenanceCost = data["preventiveMaintenanceCosts"]!![i],
-//                correctiveMaintenanceCost = data["correctiveMaintenanceCosts"]!![i],
-//                arrivalDistribution = ExponentialDistribution(1 / data["arrivalLambdas"]!![i]),
-//                degradationDistribution = BetaDistribution(data["alphas"]!![i], data["betas"]!![i]),
-//                preventiveMaintenanceTimeDistribution = ExponentialDistribution(data["preventiveMaintenanceTimes"]!![i]),
-//                correctiveMaintenanceTimeDistribution = ExponentialDistribution(data["correctiveMaintenanceTimes"]!![i])
-//            )
-//        )
-//    }
-
     /*
     0  thresholds
     1  arrivalLambdas
@@ -95,7 +54,6 @@ fun getSimulator(
             )
         )
     }
-//    inputScanner.close()
 
     // Add a matrix of ConstantRealDistribution objects. This allows usage of a distribution instead of a constant.
     val arrivalDistributionMatrix = File(matrixFilePath).readLines().map { line ->
