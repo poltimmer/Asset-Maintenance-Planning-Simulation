@@ -70,7 +70,6 @@ class Simulator(private val fes: FES, private val fse: FSE, private val machines
                             else -> throw Exception("Policy not recognized")
                         }
 
-
                         fes.add(MaintenanceEvent(currentTime + repairTime, machineToRepair, fse))
                         fes.add(FSEArrivalEvent(currentTime + repairTime, machineToRepair, fse))
                     }
@@ -81,13 +80,7 @@ class Simulator(private val fes: FES, private val fse: FSE, private val machines
                     if (fes.peek() == null) {
                         println("yeah, it's null")
                     }
-                    fes.add(
-                        FSEArrivalEvent(
-                            time = fes.peek().time,
-                            machine = event.machine,
-                            fse = fse
-                        )
-                    ) //todo: what if time is null?
+                    fes.add(FSEArrivalEvent(fes.peek().time, event.machine, fse)) //todo: what if time is null?
                 }
             }
 
@@ -97,12 +90,7 @@ class Simulator(private val fes: FES, private val fse: FSE, private val machines
                 if (event.machine.hasFailed()) {
                     results[event.machine]!!.reportMachineFailed(currentTime)
                 } else {
-                    fes.add(
-                        DegradationEvent(
-                            time = currentTime + event.machine.arrivalDistribution.sample(),
-                            machine = event.machine
-                        )
-                    )
+                    fes.add(DegradationEvent(currentTime + event.machine.arrivalDistribution.sample(), event.machine))
                 }
             }
 
@@ -112,12 +100,7 @@ class Simulator(private val fes: FES, private val fse: FSE, private val machines
                 results[event.machine]!!.reportCost(event.machine.downTimePenaltyAtTime(currentTime))
                 results[event.machine]!!.reportMachineRepaired(currentTime)
                 // When maintenance is finished, restart degradation process.
-                fes.add(
-                    DegradationEvent(
-                        time = currentTime + event.machine.arrivalDistribution.sample(),
-                        machine = event.machine
-                    )
-                )
+                fes.add(DegradationEvent(currentTime + event.machine.arrivalDistribution.sample(), event.machine))
             }
         }
 
