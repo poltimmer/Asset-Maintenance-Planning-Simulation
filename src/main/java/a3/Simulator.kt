@@ -106,6 +106,7 @@ class Simulator(private val fes: FES, private val fse: FSE, private val machines
 
         // Collect final downtime penalties
         // todo: resetting fail time between batches has implications for response time.
+        //  possible fix is just not resetting and not collecting downtime penalty at end.
         for (machine in machines) {
             results[machine]!!.reportCost(machine.downTimePenaltyAtTime(currentTime))
         }
