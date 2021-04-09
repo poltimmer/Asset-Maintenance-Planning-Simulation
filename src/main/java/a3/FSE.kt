@@ -6,7 +6,7 @@ import org.apache.commons.math3.distribution.ConstantRealDistribution
  * Field service engineer
  */
 class FSE(
-    val arrivalDistributionMatrix: List<List<AbstractRealDistribution>>,
+    val travelTimeDistributionMatrix: List<List<AbstractRealDistribution>>,
     val policy: Policy
 ) {
     // only 1 FSE

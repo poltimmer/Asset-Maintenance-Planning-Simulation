@@ -3,7 +3,7 @@ package a3
 import a3.events.DegradationEvent
 import a3.events.FSEArrivalEvent
 import a3.events.MaintenanceEvent
-import java.util.*
+import kotlin.random.Random
 
 class Simulator(private val fes: FES, private val fse: FSE, private val machines: List<Machine>) {
     private var currentTime = 0.0
@@ -34,105 +34,60 @@ class Simulator(private val fes: FES, private val fse: FSE, private val machines
             currentTime = event.time
 
             if (event is FSEArrivalEvent) {
-                if (fse.policy == Policy.REACTIVE) {
-                    val failedMachines = ArrayList<Machine>()
-                    for (machine in machines) {
-                        if (machine.hasFailed()) {
-                            failedMachines.add(machine)
-                        }
-                    }
-                    if (failedMachines.isNotEmpty()) {
-                        // Pick the single machine with maximum downtime penalty. Arbitrary choice in case of ties.
-                        val machineToRepair = failedMachines.maxByOrNull { it.downTimePenaltyAtTime(currentTime) }!!
+                val machineToRepair: Machine? = when (fse.policy) {
+                    // Pick the single machine with maximum downtime penalty. Random choice in case of ties.
+                    Policy.REACTIVE -> machines.filter { it.hasFailed() }
+                        .maxWithOrNull(compareBy({ it.downTimePenaltyAtTime(currentTime) }, { Random.nextDouble() }))
 
-                        if (machineToRepair == event.machine) {
-//                    fes.add(CorrectiveMaintenanceEvent(time = , machine = machineToRepair, fse = fse))
-                            // Corrective Maintenance
+                    // Pick the single machine with maximal degradation, then by minimal expected travel time, then random in case of ties.
+                    Policy.GREEDY -> machines.maxWithOrNull(
+                        compareBy({ it.degradation },
+                            { -fse.travelTimeDistributionMatrix[event.machine.id][it.id].numericalMean },
+                            { Random.nextDouble() })
+                    )!!
+                    else -> throw Exception("Policy not recognized")
+                }
 
-                            results[machineToRepair]!!.reportCost(machineToRepair.correctiveMaintenanceCost)
-                            val repairTime = machineToRepair.correctiveMaintenanceTimeDistribution.sample()
-                            fes.add(
-                                MaintenanceEvent(
-                                    time = currentTime + repairTime,
-                                    machine = machineToRepair,
-                                    fse = fse
-                                )
-                            )
-                            fes.add(
-                                FSEArrivalEvent(
-                                    time = currentTime + repairTime,
-                                    machine = machineToRepair,
-                                    fse = fse
-                                )
-                            )
-                        } else {
-                            val travelTime =
-                                fse.arrivalDistributionMatrix[event.machine.id][machineToRepair.id].sample()
-                            fes.add(
-                                FSEArrivalEvent(
-                                    time = currentTime + travelTime,
-                                    machine = machineToRepair,
-                                    fse = fse
-                                )
-                            )
-                        }
+                if (machineToRepair != null && machineToRepair.degradation > 0) {
+                    if (machineToRepair != event.machine) {
+                        // Travel to machine that needs repairs
+                        val travelTime =
+                            fse.travelTimeDistributionMatrix[event.machine.id][machineToRepair.id].sample()
+
+                        fes.add(FSEArrivalEvent(currentTime + travelTime, machineToRepair, fse))
                     } else {
-                        // Stay idle until next state change
-                        // Add event at same time as next event. Will be scheduled right after next event in queue,
-                        // because the queue is FIFO on ties.
-                        if (fes.peek() == null) {
-                            println("yeah, it's null")
-                        }
-                        fes.add(FSEArrivalEvent(time = fes.peek().time, machine = event.machine, fse = fse)) //todo: what if time is null?
-                    }
-                } else if (fse.policy == Policy.GREEDY) { //TODO: FES goes empty under greedy policy
-                    // Machine with max degradation, then shortest travel time
-                    val machineToRepair =
-                        machines.maxWithOrNull( //TODO: pick uniformly at random, or prove it already does so
-                            compareBy({ it.degradation },
-                                { -fse.arrivalDistributionMatrix[event.machine.id][it.id].numericalMean })
-                        )!!
+                        // No need to travel. Repair machine.
 
-                    if (machineToRepair.degradation == 0.0) {
-                        // Stay idle until next state change
-                        // Add event at same time as next event. Will be scheduled right after next event in queue,
-                        // because the queue is FIFO on ties.
-                        if (fes.peek() == null) {
-                            println("yeah, it's null")
+                        val repairTime = when (fse.policy) { // Report maintenance cost and sample repair time
+                            Policy.REACTIVE -> {
+                                results[machineToRepair]!!.reportCost(machineToRepair.correctiveMaintenanceCost)
+                                machineToRepair.correctiveMaintenanceTimeDistribution.sample()
+                            }
+                            Policy.GREEDY -> {
+                                results[machineToRepair]!!.reportCost(machineToRepair.preventiveMaintenanceCost)
+                                machineToRepair.preventiveMaintenanceTimeDistribution.sample()
+                            }
+                            else -> throw Exception("Policy not recognized")
                         }
-                        fes.add(FSEArrivalEvent(time = fes.peek().time, machine = event.machine, fse = fse)) //todo: this might be where it goes wrong?
-                    } else {
-                        if (machineToRepair == event.machine) {
-                            // Preventive maintenance
-                            results[machineToRepair]!!.reportCost(machineToRepair.preventiveMaintenanceCost)
 
-                            val repairTime = machineToRepair.preventiveMaintenanceTimeDistribution.sample()
-                            fes.add(
-                                MaintenanceEvent(
-                                    time = currentTime + repairTime,
-                                    machine = machineToRepair,
-                                    fse = fse
-                                )
-                            )
-                            fes.add(
-                                FSEArrivalEvent(
-                                    time = currentTime + repairTime,
-                                    machine = machineToRepair,
-                                    fse = fse
-                                )
-                            )
-                        } else {
-                            val travelTime =
-                                fse.arrivalDistributionMatrix[event.machine.id][machineToRepair.id].sample()
-                            fes.add(
-                                FSEArrivalEvent(
-                                    time = currentTime + travelTime,
-                                    machine = machineToRepair,
-                                    fse = fse
-                                )
-                            )
-                        }
+
+                        fes.add(MaintenanceEvent(currentTime + repairTime, machineToRepair, fse))
+                        fes.add(FSEArrivalEvent(currentTime + repairTime, machineToRepair, fse))
                     }
+                } else {
+                    // Stay idle until next state change
+                    // Add event at same time as next event. Will be scheduled right after next event in queue,
+                    // because the queue is FIFO on ties.
+                    if (fes.peek() == null) {
+                        println("yeah, it's null")
+                    }
+                    fes.add(
+                        FSEArrivalEvent(
+                            time = fes.peek().time,
+                            machine = event.machine,
+                            fse = fse
+                        )
+                    ) //todo: what if time is null?
                 }
             }
 

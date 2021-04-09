@@ -57,14 +57,14 @@ fun getSimulator(
     }
 
     // Create a matrix of ConstantRealDistribution objects. This allows usage of a distribution instead of a constant.
-    val arrivalDistributionMatrix = File(matrixFilePath).readLines().map { line ->
+    val travelTimeDistributionMatrix = File(matrixFilePath).readLines().map { line ->
         line.split("\\s".toRegex()).map { ConstantRealDistribution(it.toDouble()) }
     }
 
     // Create FSE
     val fse = FSE(
         policy = policy,
-        arrivalDistributionMatrix = arrivalDistributionMatrix,
+        travelTimeDistributionMatrix = travelTimeDistributionMatrix,
     )
 
     return Simulator(
