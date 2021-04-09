@@ -39,6 +39,7 @@ fun getSimulator(
 
     val machines = ArrayList<Machine>()
 
+    // Create Machines
     for (i in inputData[0].indices) {
         machines.add(
             Machine(
@@ -55,11 +56,12 @@ fun getSimulator(
         )
     }
 
-    // Add a matrix of ConstantRealDistribution objects. This allows usage of a distribution instead of a constant.
+    // Create a matrix of ConstantRealDistribution objects. This allows usage of a distribution instead of a constant.
     val arrivalDistributionMatrix = File(matrixFilePath).readLines().map { line ->
         line.split("\\s".toRegex()).map { ConstantRealDistribution(it.toDouble()) }
     }
 
+    // Create FSE
     val fse = FSE(
         policy = policy,
         arrivalDistributionMatrix = arrivalDistributionMatrix,
