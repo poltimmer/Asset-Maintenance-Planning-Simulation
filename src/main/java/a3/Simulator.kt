@@ -10,7 +10,7 @@ class Simulator(private val fes: FES, private val fse: FSE, private val machines
 
     init {
         // Initialize FSE
-        fes.add(FSEArrivalEvent(time = 0.0, fse = fse, machine = machines[0]))
+        fes.add(FSEArrivalEvent(time = 0.0, machine = machines[0], fse = fse))
 
         // initialize degradations
         for (machine in machines) {
@@ -95,6 +95,7 @@ class Simulator(private val fes: FES, private val fse: FSE, private val machines
 
             if (event is MaintenanceEvent) {
                 // Repair and report downtime penalty
+                results[event.machine]!!.reportResponseTime(currentTime - event.machine.lastFailedAtTime)
                 event.machine.repair()
                 results[event.machine]!!.reportCost(event.machine.downTimePenaltyAtTime(currentTime))
                 results[event.machine]!!.reportMachineRepaired(currentTime)
@@ -104,6 +105,7 @@ class Simulator(private val fes: FES, private val fse: FSE, private val machines
         }
 
         // Collect final downtime penalties
+        // todo: resetting fail time between batches has implications for response time.
         for (machine in machines) {
             results[machine]!!.reportCost(machine.downTimePenaltyAtTime(currentTime))
         }
