@@ -7,9 +7,14 @@ import kotlin.math.min
 /**
  * @param id
  * @param threshold failure threshold of this machine
- * @param degradation current degradation of this machine
+ * @param downTimeCost cost of downtime per single time step
+ * @param preventiveMaintenanceCost cost of a preventive maintenance action
+ * @param correctiveMaintenanceCost cost of a corrective maintenance action
  * @param arrivalDistribution distribution for sampling arrival time of degradation jump
  * @param degradationDistribution distribution for sampling degradation jump
+ * @param preventiveMaintenanceTimeDistribution distribution for sampling the repair time of preventive maintenance
+ * @param correctiveMaintenanceTimeDistribution distribution for sampling the repair time of corrective maintenance
+ * @param degradation current degradation of this machine
  */
 class Machine(
     val id: Int,

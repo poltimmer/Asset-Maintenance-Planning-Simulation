@@ -19,7 +19,7 @@ class Simulator(private val fes: FES, private val fse: FSE, private val machines
     }
 
 
-    fun simulate(duration: Double): HashMap<Machine, SimResults> {
+    fun simulate(duration: Double): Map<Machine, SimResults> {
         val results = HashMap<Machine, SimResults>()
         val startTime = currentTime
 
