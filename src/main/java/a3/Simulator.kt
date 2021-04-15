@@ -10,7 +10,7 @@ class Simulator(
     private val fes: FES,
     private val fse: FSE,
     private val machines: List<Machine>,
-    private val degradationLoadSharing: Boolean = false
+    private val loadSharingDegradation: Boolean = false
 ) {
     private var currentTime = 0.0
 
@@ -31,7 +31,6 @@ class Simulator(
 
         for (machine in machines) {
             // Create SimResults objects
-            // machine.lastFailedAtTime = startTime fixme: new implementation
             results[machine] = SimResults(simDuration = duration, startTime = startTime)
         }
 
@@ -62,7 +61,6 @@ class Simulator(
                         fes.add(FSEArrivalEvent(currentTime + travelTime, machineToRepair, fse))
                     } else {
                         // No need to travel. Repair machine.
-
                         val repairTime =
                             if (machineToRepair.hasFailed) { // Report maintenance cost and sample repair time
                                 results[machineToRepair]!!.reportCost(machineToRepair.correctiveMaintenanceCost)
@@ -71,8 +69,9 @@ class Simulator(
                                 results[machineToRepair]!!.reportCost(machineToRepair.preventiveMaintenanceCost)
                                 machineToRepair.preventiveMaintenanceTimeDistribution.sample()
                             }
-
+                        // Schedule a maintenance event for when the repair is finished
                         fes.add(MaintenanceEvent(currentTime + repairTime, machineToRepair, fse))
+                        // Make the FSE available again as soon as the repair is finished
                         fes.add(FSEArrivalEvent(currentTime + repairTime, machineToRepair, fse))
                     }
                 } else {
@@ -88,24 +87,29 @@ class Simulator(
             }
 
             if (event is DegradationEvent) {
+                var machineToDegrade: Machine? = null
                 if (event.machine.hasFailed) {
-                    results[event.machine]!!.reportMachineFailed(currentTime)
-                    if (degradationLoadSharing) {
-                        // Pick and degrade a running machine, uniform at random. This simulates the
-                        // uniform load distribution.
+                    if (loadSharingDegradation) {
+                        // Pick a running machine to degrade, uniform at random.
+                        // This simulates the uniform load distribution.
                         val runningMachines = machines.filterNot { it.hasFailed }
                         if (runningMachines.isNotEmpty()) {
-                            runningMachines.random().degrade(currentTime)
+                            machineToDegrade = runningMachines.random()
                         }
                     }
                 } else {
-                    // degrade machine and schedule new degradation event if it is still operational
-                    event.machine.degrade(currentTime)
-                    if (event.machine.hasFailed) {
-                        // If the machine has went from operational to failed, start downtime cost penalty
-                        fes.add(DownTimeEvent(currentTime + 1, event.machine))
+                    machineToDegrade = event.machine
+                }
+                // If there is a machine to degrade, degrade that machine and check for failure
+                if (machineToDegrade != null) {
+                    machineToDegrade.degrade(currentTime)
+                    if (machineToDegrade.hasFailed) {
+                        // If the machine has gone from operational to failed, start downtime cost penalty
+                        results[machineToDegrade]!!.reportMachineFailed(currentTime)
+                        fes.add(DownTimeEvent(currentTime + 1, machineToDegrade))
                     }
                 }
+                // Schedule a new degradation event for this machine
                 fes.add(DegradationEvent(currentTime + event.machine.arrivalDistribution.sample(), event.machine))
             }
 
@@ -113,28 +117,17 @@ class Simulator(
                 // Repair and report downtime penalty
                 results[event.machine]!!.reportResponseTime(currentTime - event.machine.lastFailedAtTime)
                 event.machine.repair()
-                //  results[event.machine]!!.reportCost(event.machine.downTimePenaltyAtTime(currentTime)) // fixme: switched to new implementation
                 results[event.machine]!!.reportMachineRepaired(currentTime)
-                // When maintenance is finished, restart degradation process.
-//                fes.add(DegradationEvent(currentTime + event.machine.arrivalDistribution.sample(), event.machine)) // fixme: switched to new implementation
             }
 
             if (event is DownTimeEvent) {
-                // If machine is still down, report penalty, and schedule new event.
-                // Else, shut down the downtime event process.
+                // Keep reporting downtime penalties while the machine is down
                 if (event.machine.hasFailed) {
                     results[event.machine]!!.reportCost(event.machine.downTimeCost)
                     fes.add(DownTimeEvent(currentTime + 1, event.machine))
                 }
             }
         }
-
-        // Collect final downtime penalties
-        // todo: resetting fail time between batches has implications for response time.
-        //  possible fix is just not resetting and not collecting downtime penalty at end.
-//        for (machine in machines) {
-//            results[machine]!!.reportCost(machine.downTimePenaltyAtTime(currentTime))
-//        }
 
         return results
     }
