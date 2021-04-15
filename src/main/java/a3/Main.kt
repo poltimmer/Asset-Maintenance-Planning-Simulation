@@ -8,6 +8,7 @@ import java.io.File
 
 fun main() {
     println("hello world")
+    // TODO: investigate costs. Only enable downtime costs.
     for (i in 0 until 4) {
         val results = getSimulator(Policy.GREEDY, false).simulate(100000.0)
         println("_______________________")

@@ -29,8 +29,6 @@ class Machine(
     var degradation: Double = 0.0,
     var lastFailedAtTime: Double = 0.0,
 ) {
-    // unique location
-    // subject to degradation
     val hasFailed : Boolean get() = degradation >= threshold
 
     fun degrade(currentTime: Double) {
