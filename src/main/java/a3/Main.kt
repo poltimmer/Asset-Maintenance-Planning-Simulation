@@ -11,7 +11,7 @@ fun main() {
 //    var event = CorrectiveMaintenanceEvent(0.1, Machine(1, threshold = 1.0), fse = FSE())
 //    println(event.time)
     for (i in 0 until 4) {
-        val results = getSimulator(Policy.GREEDY).simulate(100000.0)
+        val results = getSimulator(Policy.GREEDY, true).simulate(100000.0)
         println("_______________________")
         for ((machine, result) in results.toSortedMap(compareBy { it.id })) {
             println()
@@ -26,6 +26,7 @@ fun main() {
 
 fun getSimulator(
     policy: Policy,
+    degradationLoadSharing: Boolean = false,
     inputFilePath: String = "./input/input.txt",
     matrixFilePath: String = "./input/matrix.txt"
 ): Simulator {
@@ -76,5 +77,6 @@ fun getSimulator(
         fes = FES(),
         fse = fse,
         machines = machines,
+        degradationLoadSharing = degradationLoadSharing,
     )
 }

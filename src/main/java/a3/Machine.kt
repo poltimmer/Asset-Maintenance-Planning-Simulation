@@ -31,12 +31,13 @@ class Machine(
 ) {
     // unique location
     // subject to degradation
+    val hasFailed : Boolean get() = degradation >= threshold
 
     fun degrade(currentTime: Double) {
-        if (hasFailed()) return
+        if (hasFailed) return
         // cap degradation to threshold
         degradation = min(degradation + degradationDistribution.sample(), threshold)
-        if (hasFailed()) {
+        if (hasFailed) {
             lastFailedAtTime = currentTime
         }
     }
@@ -45,14 +46,10 @@ class Machine(
         degradation = 0.0
     }
 
-    fun hasFailed(): Boolean {
-        return degradation >= threshold
-    }
-
     fun downTimePenaltyAtTime(currentTime: Double): Double {
-        return if (hasFailed()) {
+        return if (hasFailed) {
             if (currentTime - lastFailedAtTime < 0) {
-                throw Exception("negative downtime penalty")
+                throw Exception("Current time lower than expected")
             }
             // Only whole time steps
             floor(currentTime - lastFailedAtTime) * downTimeCost

@@ -2,20 +2,19 @@ package a3
 
 import kotlin.math.pow
 
-class SimResults(private val simDuration: Double, private val startTime: Double) {
+class SimResults(private val simDuration: Double, startTime: Double) {
     private var cost = 0.0
-    val costAvg get() = cost/simDuration
+    val costAvg get() = cost / simDuration
 
     private var responseTimeSum = 0.0
     private var responseTimeSumOfSquares = 0.0
     private var responseTimeCount = 0
-    val responseTimeMean get() = responseTimeSum/responseTimeCount
-    val responseTimeVar get() = responseTimeSumOfSquares/responseTimeCount - responseTimeMean.pow(2)
+    val responseTimeMean get() = responseTimeSum / responseTimeCount
+    val responseTimeVar get() = responseTimeSumOfSquares / responseTimeCount - responseTimeMean.pow(2)
 
     private var lastUpdateTime = startTime
     private var operationalSum = 0.0
-    val operationalRatio get() = operationalSum/simDuration
-
+    val operationalRatio get() = operationalSum / simDuration
 
 
     fun reportCost(cost: Double) {
