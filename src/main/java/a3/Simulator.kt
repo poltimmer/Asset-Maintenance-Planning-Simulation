@@ -62,10 +62,18 @@ class Simulator(
                     } else {
                         // No need to travel. Repair machine.
                         val repairTime =
-                            if (machineToRepair.hasFailed) { // Report maintenance cost and sample repair time
+                            if (machineToRepair.hasFailed) {
+                                // Report corrective maintenance cost and sample repair time
+                                results[machineToRepair]!!.reportResponseTime(currentTime - machineToRepair.lastFailedAtTime)
                                 results[machineToRepair]!!.reportCost(machineToRepair.correctiveMaintenanceCost)
                                 machineToRepair.correctiveMaintenanceTimeDistribution.sample()
                             } else {
+                                // Bring machine offline for preventive maintenance, and start downtime penalty
+                                machineToRepair.degradation = machineToRepair.threshold
+                                machineToRepair.lastFailedAtTime = currentTime // fixme: should this be here?
+                                results[machineToRepair]!!.reportMachineOffline(currentTime)
+                                fes.add(DownTimeEvent(currentTime + 1, machineToRepair))
+
                                 results[machineToRepair]!!.reportCost(machineToRepair.preventiveMaintenanceCost)
                                 machineToRepair.preventiveMaintenanceTimeDistribution.sample()
                             }
@@ -105,7 +113,7 @@ class Simulator(
                     machineToDegrade.degrade(currentTime)
                     if (machineToDegrade.hasFailed) {
                         // If the machine has gone from operational to failed, start downtime cost penalty
-                        results[machineToDegrade]!!.reportMachineFailed(currentTime)
+                        results[machineToDegrade]!!.reportMachineOffline(currentTime)
                         fes.add(DownTimeEvent(currentTime + 1, machineToDegrade))
                     }
                 }
@@ -115,9 +123,8 @@ class Simulator(
 
             if (event is MaintenanceEvent) {
                 // Repair and report downtime penalty
-                results[event.machine]!!.reportResponseTime(currentTime - event.machine.lastFailedAtTime)
                 event.machine.repair()
-                results[event.machine]!!.reportMachineRepaired(currentTime)
+                results[event.machine]!!.reportMachineOnline(currentTime)
             }
 
             if (event is DownTimeEvent) {

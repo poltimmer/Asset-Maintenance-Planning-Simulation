@@ -21,12 +21,12 @@ class SimResults(private val simDuration: Double, startTime: Double) {
         this.cost += cost
     }
 
-    fun reportMachineRepaired(currentTime: Double) {
+    fun reportMachineOnline(currentTime: Double) { // todo: maybe make this more robust. Doesn't work in case of double calls
         // operationalSum += 0 * (currentTime - lastUpdateTime)
         lastUpdateTime = currentTime
     }
 
-    fun reportMachineFailed(currentTime: Double) {
+    fun reportMachineOffline(currentTime: Double) {
         operationalSum += 1 * (currentTime - lastUpdateTime)
         lastUpdateTime = currentTime
     }

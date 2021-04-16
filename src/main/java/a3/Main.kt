@@ -9,8 +9,9 @@ import java.io.File
 fun main() {
     println("hello world")
     // TODO: investigate costs. Only enable downtime costs.
+    val simulator = getSimulator(Policy.GREEDY, false)
     for (i in 0 until 4) {
-        val results = getSimulator(Policy.GREEDY, false).simulate(100000.0)
+        val results = simulator.simulate(100000.0)
         println("_______________________")
         for ((machine, result) in results.toSortedMap(compareBy { it.id })) {
             println()
@@ -19,6 +20,7 @@ fun main() {
             println("Response time mean: ${result.responseTimeMean}  |  var: ${result.responseTimeVar}")
             println("Operational ratio: ${result.operationalRatio}")
         }
+        // todo: print cost sum
         println("${Counter.count} events fired")
     }
 }
