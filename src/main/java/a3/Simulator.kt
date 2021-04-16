@@ -16,7 +16,7 @@ class Simulator(
 
     init {
         // Initialize FSE
-        fes.add(FSEArrivalEvent(time = 0.0, machine = machines[0], fse = fse))
+        fes.add(FSEArrivalEvent(time = 0.0, machine = machines[0]))
 
         // initialize degradations
         for (machine in machines) {
@@ -42,7 +42,7 @@ class Simulator(
                 val machineToRepair = when (fse.policy) {
                     // Pick the single machine with maximum downtime penalty. Random choice in case of ties.
                     Policy.REACTIVE -> machines.filter { it.hasFailed }
-                        .maxWithOrNull(compareBy<Machine> { it.downTimePenaltyAtTime(currentTime) }.thenBy { Random.nextDouble() })
+                        .maxWithOrNull(compareBy<Machine> { it.downTimeCost }.thenBy { Random.nextDouble() })
 
                     // Pick the single machine with maximal degradation, then by minimal expected travel time, then random in case of ties.
                     Policy.GREEDY -> machines.maxWithOrNull(
@@ -58,7 +58,7 @@ class Simulator(
                         val travelTime =
                             fse.travelTimeDistributionMatrix[event.machine.id][machineToRepair.id].sample()
 
-                        fes.add(FSEArrivalEvent(currentTime + travelTime, machineToRepair, fse))
+                        fes.add(FSEArrivalEvent(currentTime + travelTime, machineToRepair))
                     } else {
                         // No need to travel. Repair machine.
                         val repairTime =
@@ -78,23 +78,19 @@ class Simulator(
                                 machineToRepair.preventiveMaintenanceTimeDistribution.sample()
                             }
                         // Schedule a maintenance event for when the repair is finished
-                        fes.add(MaintenanceEvent(currentTime + repairTime, machineToRepair, fse))
-                        // Make the FSE available again as soon as the repair is finished
-                        fes.add(FSEArrivalEvent(currentTime + repairTime, machineToRepair, fse))
+                        fes.add(MaintenanceEvent(currentTime + repairTime, machineToRepair))
                     }
                 } else {
                     // Stay idle until next state change
                     // Add event at same time as next event. Will be scheduled right after next event in queue,
                     // because the queue is FIFO on ties.
-                    println("idle") //todo: remove
+//                    println("idle") //todo: remove
                     if (fes.peek() == null) {
                         println("yeah, it's null")
                     }
-                    fes.add(FSEArrivalEvent(fes.peek().time, event.machine, fse)) //todo: what if time is null?
+                    fes.add(FSEArrivalEvent(fes.peek().time, event.machine)) //todo: what if time is null?
                 }
-            }
-
-            if (event is DegradationEvent) {
+            } else if (event is DegradationEvent) {
                 var machineToDegrade: Machine? = null
                 if (event.machine.hasFailed) {
                     if (loadSharingDegradation) {
@@ -119,20 +115,20 @@ class Simulator(
                 }
                 // Schedule a new degradation event for this machine
                 fes.add(DegradationEvent(currentTime + event.machine.arrivalDistribution.sample(), event.machine))
-            }
-
-            if (event is MaintenanceEvent) {
-                // Repair and report downtime penalty
+            } else if (event is MaintenanceEvent) {
+                // Repair and report the machine being online
                 event.machine.repair()
                 results[event.machine]!!.reportMachineOnline(currentTime)
-            }
-
-            if (event is DownTimeEvent) {
+                // Make the FSE available again
+                fes.add(FSEArrivalEvent(currentTime, event.machine))
+            } else if (event is DownTimeEvent) {
                 // Keep reporting downtime penalties while the machine is down
                 if (event.machine.hasFailed) {
                     results[event.machine]!!.reportCost(event.machine.downTimeCost)
                     fes.add(DownTimeEvent(currentTime + 1, event.machine))
                 }
+            } else {
+                throw Exception("Unexpected event")
             }
         }
 

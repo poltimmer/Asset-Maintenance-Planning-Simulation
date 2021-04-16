@@ -44,7 +44,7 @@ class Machine(
         degradation = 0.0
     }
 
-    fun downTimePenaltyAtTime(currentTime: Double): Double {
+    fun downTimePenaltyAtTime(currentTime: Double): Double { // todo: remove unused function
         return if (hasFailed) {
             if (currentTime - lastFailedAtTime < 0) {
                 throw Exception("Current time lower than expected")

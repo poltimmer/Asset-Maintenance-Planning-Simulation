@@ -3,6 +3,10 @@ package a3.events
 import a3.Counter
 import a3.Machine
 
+/**
+ * @param time time of the event
+ * @param machine machine where the maintenance is executed
+ */
 abstract class Event(val time: Double, val machine: Machine) : Comparable<Event> {
     private val creationOrder = Counter.next()
 
