@@ -83,7 +83,7 @@ class RunCombiner(
      * @param arr Results
      * @return Mean
      */
-    fun getMeanFromDoubles(arr: DoubleArray): Double {
+    private fun getMeanFromDoubles(arr: DoubleArray): Double {
         return arr.average()
     }
 
@@ -92,7 +92,7 @@ class RunCombiner(
      * @param arr Results
      * @return Variance
      */
-    fun getVarianceFromDoubles(arr: DoubleArray): Double {
+    private fun getVarianceFromDoubles(arr: DoubleArray): Double {
         return arr.map { it * it }.average() - getMeanFromDoubles(arr).pow(2)
     }
 
@@ -101,7 +101,7 @@ class RunCombiner(
      * @param arr Results
      * @return Error
      */
-    fun getErrorFromDoubles(arr: DoubleArray): Double {
+    private fun getErrorFromDoubles(arr: DoubleArray): Double {
         return 1.96 * sqrt(getVarianceFromDoubles(arr) / arr.size)
     }
 }

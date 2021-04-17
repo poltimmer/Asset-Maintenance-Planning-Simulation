@@ -4,32 +4,45 @@ import org.apache.commons.math3.distribution.BetaDistribution
 import org.apache.commons.math3.distribution.ConstantRealDistribution
 import org.apache.commons.math3.distribution.ExponentialDistribution
 import java.io.File
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Paths
 
 
 fun main() {
     println("hello world")
     // TODO: investigate costs. Only enable downtime costs.
-    val simulator = getSimulator(Policy.REACTIVE, true)
-    for (i in 0 until 4) {
-        val results = simulator.simulate(100000.0)
-        println("_______________________")
-        for ((machine, result) in results.toSortedMap(compareBy { it.id })) {
-            println()
-            println("Machine id: ${machine.id}")
-            println("Average cost: ${result.costAvg}")
-            println("Response time mean: ${result.responseTimeMean}  |  var: ${result.responseTimeVar}")
-            println("Operational ratio: ${result.operationalRatio}")
-        }
-        // todo: print cost sum
-        println("${Counter.count} events fired")
-    }
+    // TOD: put results tables into report
+    // TODO: write introduction
+    // TODO: convert number of runs talk
+    // TODO: implement histograms for response time
+    // TODO: optionally a short histogram for the warm-up time
+    val simulator = getSimulator(Policy.GREEDY, true)
+//    for (i in 0 until 4) {
+//        val results = simulator.simulate(100000.0)
+//        println("_______________________")
+//        for ((machine, result) in results.toSortedMap(compareBy { it.id })) {
+//            println()
+//            println("Machine id: ${machine.id}")
+//            println("Average cost: ${result.costAvg}")
+//            println("Response time mean: ${result.responseTimeMean}  |  var: ${result.responseTimeVar}")
+//            println("Operational ratio: ${result.operationalRatio}")
+//        }
+//        // todo: print cost sum
+//        println("${Counter.count} events fired")
+//    }
+
+//    RunCombiner(simulator, 1000, 1000.0, 10000.0).printLatexTables()
+
+    simulator.simulate(10000.0)
+    exportHistogram("responseTime", simulator.simulate(100000.0) as Map<Machine, SimResultsWithHist>)
 }
 
 fun getSimulator(
     policy: Policy,
     loadSharingDegradation: Boolean = false,
-    inputFilePath: String = "./input/input.txt",
-    matrixFilePath: String = "./input/matrix.txt"
+    inputFilePath: String = "./input/47/input.txt",
+    matrixFilePath: String = "./input/47/matrix.txt"
 ): Simulator {
     /*
     0  thresholds
@@ -80,4 +93,33 @@ fun getSimulator(
         machines = machines,
         loadSharingDegradation = loadSharingDegradation,
     )
+}
+
+/**
+ * Export the histogram of 1 metric (for each list entry) from a set of results
+ */
+private fun exportHistogram(
+    fileName: String,
+    results: Map<Machine, SimResultsWithHist>
+) {
+    val bucketSize = SimResultsWithHist.MAX_RESPONSE_TIME / SimResultsWithHist.N_BUCKETS
+
+    // Construct the lines for each bucket
+    val lines = ArrayList<String>()
+    for (bucketId in 0 until SimResultsWithHist.N_BUCKETS) {
+        // On the line, put the (middle of) the value the bucket represents and for each station how often it occurs
+        val line = StringBuilder(String.format("%.2f", (bucketId + 0.5) * bucketSize))
+        for ((_, result) in results) {
+            line.append("\t").append(String.format("%.4f", result.histResponseTimeCumulative[bucketId]))
+        }
+        lines.add(line.toString())
+    }
+
+    // Output this table to a file
+    try {
+        println("Exporting histogram to hist-$fileName.txt")
+        Files.write(Paths.get("hist-$fileName.txt"), lines)
+    } catch (exception: IOException) {
+        exception.printStackTrace()
+    }
 }

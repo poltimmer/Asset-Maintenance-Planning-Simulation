@@ -31,7 +31,7 @@ class Simulator(
 
         for (machine in machines) {
             // Create SimResults objects
-            results[machine] = SimResults(simDuration = duration, startTime = startTime)
+            results[machine] = SimResultsWithHist(simDuration = duration, startTime = startTime)
         }
 
         while (currentTime < startTime + duration) {
