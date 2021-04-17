@@ -32,10 +32,10 @@ fun main() {
 //        println("${Counter.count} events fired")
 //    }
 
-//    RunCombiner(simulator, 1000, 1000.0, 10000.0).printLatexTables()
+    RunCombiner(simulator, 1000, 1000.0, 10000.0).printLatexTables()
 
-    simulator.simulate(10000.0)
-    exportHistogram("responseTime", simulator.simulate(100000.0) as Map<Machine, SimResultsWithHist>)
+//    simulator.simulate(10000.0)
+//    exportHistogram("responseTime", simulator.simulate(100000.0) as Map<Machine, SimResultsWithHist>)
 }
 
 fun getSimulator(

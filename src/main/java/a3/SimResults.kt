@@ -13,6 +13,7 @@ open class SimResults(private val simDuration: Double, startTime: Double) {
     val responseTimeVar get() = responseTimeSumOfSquares / responseTimeCount - responseTimeMean.pow(2)
 
     private var lastUpdateTime = startTime
+    private var lastReportStatus = -1
     private var operationalSum = 0.0
     val operationalRatio get() = operationalSum / simDuration
 
@@ -21,13 +22,21 @@ open class SimResults(private val simDuration: Double, startTime: Double) {
         this.cost += cost
     }
 
-    fun reportMachineOnline(currentTime: Double) { // todo: maybe make this more robust. Doesn't work in case of double calls
-        // operationalSum += 0 * (currentTime - lastUpdateTime)
+    fun reportMachineOnline(currentTime: Double) {
+        if (lastReportStatus >= 0) {
+            operationalSum += lastReportStatus * (currentTime - lastUpdateTime)
+        }
+        lastReportStatus = 1
         lastUpdateTime = currentTime
     }
 
     fun reportMachineOffline(currentTime: Double) {
-        operationalSum += 1 * (currentTime - lastUpdateTime)
+        operationalSum += if (lastReportStatus < 0) {
+            1 * (currentTime - lastUpdateTime)
+        } else {
+            lastReportStatus * (currentTime - lastUpdateTime)
+        }
+        lastReportStatus = 0
         lastUpdateTime = currentTime
     }
 
