@@ -7,7 +7,7 @@ class SimResultsWithHist(simDuration: Double, startTime: Double) : SimResults(si
         /**
          * Number of buckets for each histogram (not used for queue length)
          */
-        const val N_BUCKETS = 100
+        const val N_BINS = 100
 
         /**
          * When normalization is performed, the sum of all values is this.
@@ -25,11 +25,11 @@ class SimResultsWithHist(simDuration: Double, startTime: Double) : SimResults(si
     /**
      * The actual histogram
      */
-    val histResponseTime = IntArray(N_BUCKETS)
+    val histResponseTime = IntArray(N_BINS)
 
     val histResponseTimeCumulative: DoubleArray
         get() {
-            val res = DoubleArray(N_BUCKETS)
+            val res = DoubleArray(N_BINS)
             var cumsum = 0.0
             for ((idx, item) in histResponseTime.withIndex()) {
                 cumsum += item
@@ -46,16 +46,16 @@ class SimResultsWithHist(simDuration: Double, startTime: Double) : SimResults(si
 
     override fun reportResponseTime(responseTime: Double) {
         super.reportResponseTime(responseTime)
-        val bucketSize: Double = MAX_RESPONSE_TIME / N_BUCKETS
+        val bucketSize: Double = MAX_RESPONSE_TIME / N_BINS
         val bucket = floor(responseTime / bucketSize).toInt()
-        if (bucket < N_BUCKETS) histResponseTime[bucket]++
+        if (bucket < N_BINS) histResponseTime[bucket]++
     }
 
     /**
      * Normalize the histogram such that the sum of all values is the set NORMALIZE_TO.
      */
     fun normalize() {
-        for (i in 0 until N_BUCKETS) {
+        for (i in 0 until N_BINS) {
             histResponseTime[i] /= histResponseTime.sum() / NORMALIZE_TO
         }
     }

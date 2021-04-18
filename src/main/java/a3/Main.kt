@@ -13,9 +13,9 @@ fun main() {
     println("hello world")
     // TODO: investigate costs. Only enable downtime costs.
     // TOD: put results tables into report
-    // TODO: write introduction
+    // TOD: write introduction
     // TODO: convert number of runs talk
-    // TODO: implement histograms for response time
+    // TOD: implement histograms for response time
     // TODO: optionally a short histogram for the warm-up time
     val simulator = getSimulator(Policy.GREEDY, true)
 //    for (i in 0 until 4) {
@@ -102,11 +102,11 @@ private fun exportHistogram(
     fileName: String,
     results: Map<Machine, SimResultsWithHist>
 ) {
-    val bucketSize = SimResultsWithHist.MAX_RESPONSE_TIME / SimResultsWithHist.N_BUCKETS
+    val bucketSize = SimResultsWithHist.MAX_RESPONSE_TIME / SimResultsWithHist.N_BINS
 
     // Construct the lines for each bucket
     val lines = ArrayList<String>()
-    for (bucketId in 0 until SimResultsWithHist.N_BUCKETS) {
+    for (bucketId in 0 until SimResultsWithHist.N_BINS) {
         // On the line, put the (middle of) the value the bucket represents and for each station how often it occurs
         val line = StringBuilder(String.format("%.2f", (bucketId + 0.5) * bucketSize))
         for ((_, result) in results) {

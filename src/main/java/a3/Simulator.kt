@@ -69,8 +69,7 @@ class Simulator(
                                 machineToRepair.correctiveMaintenanceTimeDistribution.sample()
                             } else {
                                 // Bring machine offline for preventive maintenance, and start downtime penalty
-                                machineToRepair.degradation = machineToRepair.threshold
-                                machineToRepair.lastFailedAtTime = currentTime // fixme: should this be here?
+                                machineToRepair.fail(currentTime)
                                 results[machineToRepair]!!.reportMachineOffline(currentTime)
                                 fes.add(DownTimeEvent(currentTime + 1, machineToRepair))
 
@@ -84,11 +83,12 @@ class Simulator(
                     // Stay idle until next state change
                     // Add event at same time as next event. Will be scheduled right after next event in queue,
                     // because the queue is FIFO on ties.
-//                    println("idle") //todo: remove
-                    if (fes.peek() == null) {
-                        println("yeah, it's null")
-                    }
-                    fes.add(FSEArrivalEvent(fes.peek().time, event.machine)) //todo: what if time is null?
+                    fes.add(
+                        FSEArrivalEvent(
+                            fes.peek()?.time ?: currentTime,
+                            event.machine
+                        )
+                    )
                 }
             } else if (event is DegradationEvent) {
                 var machineToDegrade: Machine? = null
