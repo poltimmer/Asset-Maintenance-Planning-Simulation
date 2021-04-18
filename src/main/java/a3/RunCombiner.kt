@@ -35,14 +35,15 @@ class RunCombiner(
         costMean = Array(numMachines) { DoubleArray(numRuns) }
         costSumMean = Array(numMachines) { DoubleArray(numRuns) }
         for ((run, resultsMap) in resultsList.withIndex()) {
+            var costSum = 0.0
             for ((machine, result) in resultsMap) {
-//                val result: SimResults? = resultsList[run].get(machine)
                 operationalRatio[machine.id][run] = result.operationalRatio
                 responseTimeMean[machine.id][run] = result.responseTimeMean
                 responseTimeVar[machine.id][run] = result.responseTimeVar
                 costMean[machine.id][run] = result.costAvg
-                costSumMean[machine.id][run] = result.costAvg
+                costSum += result.costAvg
             }
+            for ((machine, _) in resultsMap) costSumMean[machine.id][run] = costSum
         }
     }
 

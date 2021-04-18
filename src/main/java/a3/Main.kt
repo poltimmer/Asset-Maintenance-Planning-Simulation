@@ -17,6 +17,11 @@ fun main() {
     // TODO: convert number of runs talk
     // TOD: implement histograms for response time
     // TODO: optionally a short histogram for the warm-up time
+    // TOD: input in report
+    // TODO: custom policy
+    // TODO: results, with graphs
+    // TODO: discussion
+    // TODO: grammarly, and check for remaining keywords (station, server, etc.)
     val simulator = getSimulator(Policy.GREEDY, true)
 //    for (i in 0 until 4) {
 //        val results = simulator.simulate(100000.0)
@@ -28,7 +33,6 @@ fun main() {
 //            println("Response time mean: ${result.responseTimeMean}  |  var: ${result.responseTimeVar}")
 //            println("Operational ratio: ${result.operationalRatio}")
 //        }
-//        // todo: print cost sum
 //        println("${Counter.count} events fired")
 //    }
 
@@ -41,8 +45,8 @@ fun main() {
 fun getSimulator(
     policy: Policy,
     loadSharingDegradation: Boolean = false,
-    inputFilePath: String = "./input/47/input.txt",
-    matrixFilePath: String = "./input/47/matrix.txt"
+    inputFilePath: String = "./input/input.txt",
+    matrixFilePath: String = "./input/matrix.txt"
 ): Simulator {
     /*
     0  thresholds
