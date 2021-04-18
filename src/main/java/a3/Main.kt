@@ -10,35 +10,10 @@ import java.nio.file.Paths
 
 
 fun main() {
-    println("hello world")
-    // TODO: investigate costs. Only enable downtime costs.
-    // TOD: put results tables into report
-    // TOD: write introduction
-    // TODO: convert number of runs talk
-    // TOD: implement histograms for response time
-    // TODO: optionally a short histogram for the warm-up time
-    // TOD: input in report
-    // TODO: custom policy
-    // TODO: results, with graphs
-    // TODO: discussion
-    // TODO: grammarly, and check for remaining keywords (station, server, etc.)
-//    val simulator = getSimulator(Policy.GREEDY, false)
-//    for (i in 0 until 4) {
-//        val results = simulator.simulate(100000.0)
-//        println("_______________________")
-//        for ((machine, result) in results.toSortedMap(compareBy { it.id })) {
-//            println()
-//            println("Machine id: ${machine.id}")
-//            println("Average cost: ${result.costAvg}")
-//            println("Response time mean: ${result.responseTimeMean}  |  var: ${result.responseTimeVar}")
-//            println("Operational ratio: ${result.operationalRatio}")
-//        }
-//        println("${Counter.count} events fired")
-//    }
+    val simulator = getSimulator(Policy.CUSTOM, false)
+    RunCombiner(simulator, 10000, 1000.0, 10000.0).printLatexTables()
 
-//    RunCombiner(simulator, 1000, 1000.0, 10000.0).printLatexTables()
-
-    printHists()
+//    printHists()
 
 //    simulator.simulate(10000.0)
 //    exportHistogram("responseTime", simulator.simulate(100000.0) as Map<Machine, SimResultsWithHist>)

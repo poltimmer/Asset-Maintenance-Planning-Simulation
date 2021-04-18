@@ -48,16 +48,4 @@ class Machine(
         degradation = threshold
         lastFailedAtTime = currentTime
     }
-
-    fun downTimePenaltyAtTime(currentTime: Double): Double { // todo: remove unused function
-        return if (hasFailed) {
-            if (currentTime - lastFailedAtTime < 0) {
-                throw Exception("Current time lower than expected")
-            }
-            // Only whole time steps
-            floor(currentTime - lastFailedAtTime) * downTimeCost
-        } else {
-            0.0
-        }
-    }
 }

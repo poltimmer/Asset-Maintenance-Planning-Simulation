@@ -85,7 +85,7 @@ class RunCombiner(
      * @return Mean
      */
     private fun getMeanFromDoubles(arr: DoubleArray): Double {
-        return arr.average()
+        return arr.filter { !it.isNaN() }.average()
     }
 
     /**
@@ -94,7 +94,7 @@ class RunCombiner(
      * @return Variance
      */
     private fun getVarianceFromDoubles(arr: DoubleArray): Double {
-        return arr.map { it * it }.average() - getMeanFromDoubles(arr).pow(2)
+        return arr.filter { !it.isNaN() }.map { it * it }.average() - getMeanFromDoubles(arr).pow(2)
     }
 
     /**

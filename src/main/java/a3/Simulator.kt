@@ -10,7 +10,8 @@ class Simulator(
     private val fes: FES,
     private val fse: FSE,
     private val machines: List<Machine>,
-    private val loadSharingDegradation: Boolean = false
+    private val loadSharingDegradation: Boolean = false,
+    private val withHist: Boolean = false
 ) {
     private var currentTime = 0.0
 
@@ -31,7 +32,12 @@ class Simulator(
 
         for (machine in machines) {
             // Create SimResults objects
-            results[machine] = SimResultsWithHist(simDuration = duration, startTime = startTime)
+            results[machine] =
+                if (withHist) {
+                    SimResultsWithHist(simDuration = duration, startTime = startTime)
+                } else {
+                    SimResults(simDuration = duration, startTime = startTime)
+                }
         }
 
         val avgCorrectiveMaintenanceCost = machines.map { it.correctiveMaintenanceCost }.average()
