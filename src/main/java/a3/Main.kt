@@ -22,7 +22,7 @@ fun main() {
     // TODO: results, with graphs
     // TODO: discussion
     // TODO: grammarly, and check for remaining keywords (station, server, etc.)
-    val simulator = getSimulator(Policy.GREEDY, true)
+//    val simulator = getSimulator(Policy.GREEDY, false)
 //    for (i in 0 until 4) {
 //        val results = simulator.simulate(100000.0)
 //        println("_______________________")
@@ -36,10 +36,14 @@ fun main() {
 //        println("${Counter.count} events fired")
 //    }
 
-    RunCombiner(simulator, 1000, 1000.0, 10000.0).printLatexTables()
+//    RunCombiner(simulator, 1000, 1000.0, 10000.0).printLatexTables()
+
+    printHists()
 
 //    simulator.simulate(10000.0)
 //    exportHistogram("responseTime", simulator.simulate(100000.0) as Map<Machine, SimResultsWithHist>)
+
+
 }
 
 fun getSimulator(
@@ -113,8 +117,9 @@ private fun exportHistogram(
     for (bucketId in 0 until SimResultsWithHist.N_BINS) {
         // On the line, put the (middle of) the value the bucket represents and for each station how often it occurs
         val line = StringBuilder(String.format("%.2f", (bucketId + 0.5) * bucketSize))
-        for ((_, result) in results) {
+        for ((_, result) in results.toSortedMap(compareBy { it.id })) {
             line.append("\t").append(String.format("%.4f", result.histResponseTimeCumulative[bucketId]))
+//            line.append("\t").append(result.histResponseTime[bucketId])
         }
         lines.add(line.toString())
     }
@@ -122,8 +127,43 @@ private fun exportHistogram(
     // Output this table to a file
     try {
         println("Exporting histogram to hist-$fileName.txt")
-        Files.write(Paths.get("hist-$fileName.txt"), lines)
+        Files.write(Paths.get("hist","hist-$fileName.txt"), lines)
     } catch (exception: IOException) {
         exception.printStackTrace()
+    }
+}
+
+fun printWarmup() {
+    for (warmup in listOf(0.01, 1.0, 2.5, 5.0, 7.5, 10.0, 25.0, 50.0, 100.0, 500.0, 1000.0, 5000.0)) {
+        val resList = ArrayList<Map<Machine, SimResults>>()
+        for (i in 0 until 10000) {
+            val simulator = getSimulator(Policy.REACTIVE, false)
+            if (warmup > 0) {
+                simulator.simulate(warmup)
+            }
+            resList.add(simulator.simulate(25.0))
+        }
+        println("warmup: $warmup")
+        println("cost sum: ${resList.map { res -> res.map { it.value.costAvg }.sum() }.average()}")
+        println(
+            "response time avg: ${
+                resList.map { res -> res.map { it.value.responseTimeMean }.average() }.average()
+            }"
+        )
+        println("op ratio avg: ${resList.map { res -> res.map { it.value.operationalRatio }.average() }.average()}")
+        println()
+    }
+}
+
+fun printHists() {
+    for (policy in Policy.values()) {
+        for (loadSharing in listOf(true, false)) {
+            val simulator = getSimulator(policy, loadSharing)
+            simulator.simulate(10000.0)
+            exportHistogram(
+                "${policy.name}${if (loadSharing) " - LS" else ""}",
+                simulator.simulate(500000.0) as Map<Machine, SimResultsWithHist>
+            )
+        }
     }
 }

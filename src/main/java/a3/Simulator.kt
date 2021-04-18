@@ -34,6 +34,8 @@ class Simulator(
             results[machine] = SimResultsWithHist(simDuration = duration, startTime = startTime)
         }
 
+        val avgCorrectiveMaintenanceCost = machines.map { it.correctiveMaintenanceCost }.average()
+
         while (currentTime < startTime + duration) {
             val event = fes.poll()
             currentTime = event.time
@@ -49,6 +51,13 @@ class Simulator(
                         compareBy<Machine> { it.degradation }
                             .thenBy { -fse.travelTimeDistributionMatrix[event.machine.id][it.id].numericalMean }
                             .thenBy { Random.nextDouble() })!!
+                    Policy.CUSTOM -> machines.maxWithOrNull(
+                        compareBy<Machine> {
+                            it.degradation * it.downTimeCost *
+                                    (if (!it.hasFailed) it.correctiveMaintenanceCost else avgCorrectiveMaintenanceCost)
+                        }
+                            .thenBy { -fse.travelTimeDistributionMatrix[event.machine.id][it.id].numericalMean }
+                            .thenBy { Random.nextDouble() })
                     else -> throw Exception("Policy not recognized")
                 }
 
