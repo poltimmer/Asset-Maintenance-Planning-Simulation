@@ -1,2 +1,2 @@
-# 2DI66_asset_maintenance_planning
-Repository for the 3rd assignment in the 2DI66 Advanced Simulation course
+# Asset Maintenance Planning Simulation
+A discrete event simulation of capital asset management created in Kotlin for the TU/e course "2DI66 Advanced Simulation".
